@@ -17,8 +17,15 @@ args = parser.parse_args()
 
 page_url = 'https://horsemanager.se/lessons_daylist?farm_id=405&plant_id=95'
 
-TIME_START = datetime.time(13, 55)
-TIME_END = datetime.time(18, 00)
+TIME_START_END = {
+    'mon': [datetime.time(13, 55), datetime.time(18, 0)],
+    'tue': [datetime.time(13, 55), datetime.time(18, 0)],
+    'wed': [datetime.time(13, 55), datetime.time(18, 0)],
+    'thu': [datetime.time(13, 55), datetime.time(18, 0)],
+    'fri': [datetime.time(13, 55), datetime.time(18, 0)],
+    'sat': [datetime.time(11, 55), datetime.time(16, 0)],
+    'sun': [datetime.time(11, 55), datetime.time(16, 0)],
+}
 
 sleep_hour = 3600
 sleep_10_min = 600
@@ -94,9 +101,11 @@ def poll_page():
     sleep_time = sleep_10_min
 
     while True:
-        now = datetime.datetime.now().time()
+        weekday = time.strftime('%a').lower()
+        time_start, time_end = TIME_START_END[weekday]
 
-        if TIME_START <= now <= TIME_END:
+        now = datetime.datetime.now().time()
+        if time_start <= now <= time_end:
             print('In time frame!')
             today = time.strftime('%m-%d')
 
@@ -111,7 +120,7 @@ def poll_page():
         else:
             sleep_time = sleep_10_min
             print('Not in time frame.')
-            print('Start: {}, end: {}, now: {}'.format(TIME_START, TIME_END, now.strftime("%H:%M:%S")))
+            print('Start: {}, end: {}, now: {}'.format(time_start, time_end, now.strftime("%H:%M:%S")))
         # Sleep
         print()
         for sec in range(sleep_time):
@@ -134,15 +143,15 @@ def main():
                 time, group, track, teacher, subject, pupil_name, horse, box, status = entry
 
                 if pupil_name == target:
-                    my_lesson_msg = '{} {}'.format(horse, status if status else 'mitten')
-                other_lessons_msg.append('{}, {} - {}'.format(time, status if status else 'mitten', pupil_name))
+                    my_lesson_msg = '{}, {}\n{}'.format(horse, status if status else 'mitten', subject if subject else 'Okänd lektion')
+                other_lessons_msg.append('{}, {} - {}, {}'.format(time, status if status else 'mitten', pupil_name, track))
 
             print(my_lesson_msg)
             print()
             for lesson in other_lessons_msg:
                 print(lesson)
 
-            msg = '{} \n\n {}'.format(my_lesson_msg, '\n'.join(other_lessons_msg))
+            msg = '{} \n\n{}'.format(my_lesson_msg, '\n'.join(other_lessons_msg))
             push(msg, user_keys)
 
 if __name__ == '__main__':
